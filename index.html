@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
   <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
   <script lang="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
   <link rel="stylesheet" href="style.css">
@@ -83,31 +83,11 @@
         <p class="txt-1" id="score-a">0</p>
       </div>
       <div class="panel" id="pnl-team">
-        <select class="dropdown" id="form">
-          <option value="1">1-2-1</option>
-          <option value="2">1-1-2</option>
-          <option value="3">1-0-3</option>
-          <option value="4">2-2</option>
-          <option value="5">2-1-1</option>
-          <option value="6">3-0-1</option>
-          <option value="7">4-0</option>
-          <option value="8">5-0</option>
-        </select>
-        <select class="listbox" id="bench" size="5">
-          <option value="1">[6] Six </option>
-          <option value="2">[7] Seven </option>
-          <option value="3">[8] Eight </option>
-          <option value="4">[9] Nine </option>
-          <option value="5">[10] Ten </option>
-          <option value="6">[11] Eleven </option>
-          <option value="7">[12] Twelve</option>
-          <option value="8">[13] Thirteen</option>
-          <option value="9">[14] Fourteen</option>
-          <option value="10">[15] Fifteen</option>
-        </select> 
+
       </div>
       <div class="panel" id="pnl-field">
         <div id="field-container">
+          <canvas id="canvas"></canvas>
           <img src="futsal.png" alt="field background" id="field-img">
           <div class="player" id="play1">
               <button class="jersey topl" id="btn1">#1</button>

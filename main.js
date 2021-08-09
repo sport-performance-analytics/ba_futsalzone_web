@@ -24,8 +24,6 @@ var IntervalP;
 // Team
 var txtHScore = document.getElementById("score-h")
 var txtAScore = document.getElementById("score-a")
-var listBench = document.getElementById("bench");
-var formMenu = document.getElementById("form");
 var btnP1 = document.getElementById("btn1");
 var btnP2 = document.getElementById("btn2");
 var btnP3 = document.getElementById("btn3");
@@ -38,10 +36,13 @@ var btnP9 = document.getElementById("btn9");
 var btnP10 = document.getElementById("btn10");
 var btnP11 = document.getElementById("btn11");
 var btnP12 = document.getElementById("btn12");
-var formMenu = document.getElementById("form");
 var dirSwitch = document.getElementById("dirswitch");
 const btnHeight = 15;
 const btnWidth = 10;
+var btnPositions = [[0.00, 0.00], [0.00, 0.25], [0.00, 0.75],
+                    [0.25, 0.00], [0.25, 0.25], [0.25, 0.75],
+                    [0.50, 0.00], [0.50, 0.25], [0.50, 0.75],
+                    [0.75, 0.00], [0.75, 0.25], [0.75, 0.75]]
 // Actions
 var btnUndo = document.getElementById("undo");
 var btnPINC = document.getElementById("pass-inc");
@@ -78,6 +79,8 @@ var txtSOFF = document.getElementById("txt-soff");
 var txtSEFF = document.getElementById("txt-seff");
 //Analysis
 var tblAnl = document.getElementById("tbl-anl");
+var canvas = document.getElementById("canvas");
+var rect = canvas.getBoundingClientRect();
 
 // Helper
 const arrSum = arr => arr.reduce((a,b) => a + b, 0);
@@ -86,8 +89,8 @@ const arrSum = arr => arr.reduce((a,b) => a + b, 0);
 //#region  INITIALIZATION
 //#region  Initialize Dictionaries
 var struct_general = {  // Generic Container
-    "nplay": 5,
-    "nsub": 10
+    "nplay": 12,
+    "nsub": 0
 };
 var struct_time = { // Time Container
     "period": clockPer.innerHTML,
@@ -129,8 +132,6 @@ for(var i = 0; i<(struct_general["nplay"] + struct_general["nsub"]); i++) {
     struct_team["players"].push(pinfo)
 }
 var struct_field = { // Field Player Properties Container
-    "formation": formMenu.options[formMenu.selectedIndex].text,
-    "formationid": 0,
     "direction": 0, // 0: L>R, 1: L<R
     "players": struct_team["players"].slice(0,struct_general["nplay"])
 }
@@ -149,6 +150,8 @@ var tbl_cpass = {
     "field_id": [],
     "player_no": [],
     "last_name": [],
+    "locx": [],
+    "locy": [],
     "result": []
 }
 var tbl_player = {
@@ -245,25 +248,18 @@ for (var i = 0; i<struct_general["nplay"]; i++) {
     tbl_match["last_name2"].push("");
 }
 var tbl_anl = {
-    "Play Time": [],
-    "Rest Time": [],
-    "W/R Ratio": [],
-    "Rotations": [],
+    "Passes": [],
     "Pass %": [],
+    "Shots": [],
     "Shot %": [],
     "Source-Sink": [],
 }
 for (var i = 0; i<struct_general["nplay"]+struct_general["nsub"]; i++) {
-    tbl_anl["Rotations"].push(0);
-    tbl_anl["Play Time"].push(0);
-    tbl_anl["Rest Time"].push(0);
-    tbl_anl["W/R Ratio"].push(0);
+    tbl_anl["Passes"].push(0);
     tbl_anl["Pass %"].push(0);
+    tbl_anl["Shots"].push(0);
     tbl_anl["Shot %"].push(0);
     tbl_anl["Source-Sink"].push(0);
-    if (i<struct_general["nplay"]) {
-        tbl_anl.Rotations[tbl_anl.Rotations.length-1] = 1;
-    }
 }
 //#endregion
 //#endregion
@@ -456,15 +452,6 @@ function startPlay() {
     }
 
     displayClock(clockPlay, minutesP, secondsP)
-    for (i=0; i<struct_team.players.length; i++) {
-        if (struct_team.players[i].active==1) {
-            tbl_anl["Play Time"][i]++;
-        } else {
-            tbl_anl["Rest Time"][i]++;
-        }
-        tbl_anl["W/R Ratio"][i] = Math.round(100*tbl_anl["Play Time"][i] / (tbl_anl["Rest Time"][i]+1))/100;
-    }
-    updateAnlUITable()
 }
 function displayClock(clockTxt, minutes, seconds) {
     if(minutesP <= 9){
@@ -495,95 +482,6 @@ function updateTime() {
     struct_time["clock_main"] = clockMain.innerHTML;
     struct_time["clock_play"] = clockPlay.innerHTML;
     struct_time["period"] = clockPer.innerHTML;
-}
-//#endregion
-
-//#region Player Switch/Sub Functions
-//#region Initialize Player Select
-//#endregion
-
-function enableSubSwitch(selArray) {
-    if (arrSum(selArray)==1) {
-    } else if (arrSum(selArray)==2) {
-        switchPlayers();
-    }
-}
-
-function switchPlayers() {
-    var selArray = getKeyArray(struct_field["players"], "selected");
-    var selIdx = getAllIndexes(selArray, 1);
-    var player1 = struct_field["players"][selIdx[0]];
-    var player2 = struct_field["players"][selIdx[1]];
-
-    struct_field["players"][selIdx[0]] = player2;
-    struct_field["players"][selIdx[1]] = player1;
-
-    // Update Match Table
-    updateTime();
-    var timeMain = parseClock(struct_time["clock_main"]);
-    var timePlay = parseClock(struct_time["clock_play"]);
-    tbl_match["index"].push(tbl_match["index"].length + 1);
-    tbl_match["period"].push(struct_time["period"]);
-    tbl_match["min_run"].push(timeMain[0]);
-    tbl_match["sec_run"].push(timeMain[1]);
-    tbl_match["min_eff"].push(timePlay[0]);
-    tbl_match["sec_eff"].push(timePlay[1]);
-    tbl_match["result"].push("switch positions");
-    tbl_match["player_id1"].push(player1["pid"]);
-    tbl_match["field_id1"].push(selIdx[0]+1);
-    tbl_match["player_no1"].push(player1["pno"]);
-    tbl_match["last_name1"].push(player1["nlast"]);
-    tbl_match["player_id2"].push(player2["pid"]);
-    tbl_match["field_id2"].push(selIdx[1]+1);
-    tbl_match["player_no2"].push(player2["pno"]);
-    tbl_match["last_name2"].push(player2["nlast"]);
-
-    updateButtonLabels();
-    enableSubSwitch(getKeyArray(struct_field["players"], "selected"));
-}
-
-listBench.onchange = function(){
-    var selArray = getKeyArray(struct_field["players"], "selected");
-    if (arrSum(selArray)==1) {
-        var selIdx = getAllIndexes(selArray, 1)[0];
-        var offNo = struct_field["players"][selIdx]["pno"];
-        var offID = getAllIndexes(getKeyArray(struct_team["players"], "pno"), offNo)[0];
-
-        var benchLbl = listBench.options[listBench.selectedIndex].text;
-        var onNo = benchLbl.split("] ")[0].split("[")[1];
-        var onID = getAllIndexes(getKeyArray(struct_team["players"], "pno"), onNo)[0];
-
-        struct_team["players"][offID]["active"] = 0;
-        struct_team["players"][onID]["active"] = 1;
-        struct_field["players"][selIdx] = struct_team["players"][onID];
-        tbl_anl.Rotations[onID] += 1;
-
-        // Update Match Table
-        updateTime();
-        var timeMain = parseClock(struct_time["clock_main"]);
-        var timePlay = parseClock(struct_time["clock_play"]);
-        tbl_match["index"].push(tbl_match["index"].length + 1);
-        tbl_match["period"].push(struct_time["period"]);
-        tbl_match["min_run"].push(timeMain[0]);
-        tbl_match["sec_run"].push(timeMain[1]);
-        tbl_match["min_eff"].push(timePlay[0]);
-        tbl_match["sec_eff"].push(timePlay[1]);
-        tbl_match["result"].push("substitution");
-        tbl_match["player_id1"].push(struct_team["players"][offID]["pid"]);
-        tbl_match["field_id1"].push(selIdx+1);
-        tbl_match["player_no1"].push(struct_team["players"][offID]["pno"]);
-        tbl_match["last_name1"].push(struct_team["players"][offID]["nlast"]);
-        tbl_match["player_id2"].push(struct_team["players"][onID]["pid"]);
-        tbl_match["field_id2"].push(-1);
-        tbl_match["player_no2"].push(struct_team["players"][onID]["pno"]);
-        tbl_match["last_name2"].push(struct_team["players"][onID]["nlast"]);
-
-        updateButtonLabels();
-        updateBenchList();
-        enableSubSwitch(getKeyArray(struct_field["players"], "selected"));
-        updateAnlUITable();
-    }
-    listBench.selectedIndex = -1;
 }
 //#endregion
 
@@ -630,9 +528,11 @@ function updateAnlUITable() {
         if (r==1) {
             rCol = [104,108,115,79,191,111]
         } else if (r==2) {
-            rCol = [104,108,115,240,65,80]
+            rCol = [104,108,115,79,191,111]
         } else if (r==3) {
-            rCol = [216,110,11,79,191,111]
+            rCol = [104,108,115,240,65,80]
+        } else if (r==4) {
+            rCol = [104,108,115,240,65,80]
         } else {
             rCol = [104,108,115,59,111,209]
         }
@@ -640,23 +540,12 @@ function updateAnlUITable() {
             // Data Format
             if (r>0) {
                 var cellData = tbl_anl[metrics[r-1]][c];
-                if (r==1 || r==2) {
-                    cellData = setClock(cellData);
-                }
                 // Cell Color
-                if (r==3) {
-                    cCol = getCellColorWR(tbl_anl[metrics[r-1]], c, rCol)
-                } else {
-                    cCol = getCellColor(tbl_anl[metrics[r-1]], c, rCol)
-                }
+                cCol = getCellColor(tbl_anl[metrics[r-1]], c, rCol)
             }
             // Add Cells
             if (r==0) {
-                if (struct_team.players[c].active==1) {
-                    table += "<th style='background-color:black; border-style: solid; border-color: coral'>" + struct_team.players[c].nlast + "</th>"
-                } else {
-                    table += "<th style='background-color:var(--grey3)'>" + struct_team.players[c].nlast + "</th>"
-                }
+                table += "<th style='background-color:var(--grey1)'>" + struct_team.players[c].nlast + "</th>"
             } else {
                 table += "<th style=" + 
                             "'background-color:" + cCol + ";" + 
@@ -675,22 +564,6 @@ function getCellColor(dataArr, idx, rgb) {
 
     return "rgb(" + rVal + "," + gVal + "," + bVal + ")"
 }
-function getCellColorWR(dataOG, idx, rgb) {
-    var dataArr = []
-    for (i=0; i<dataOG.length; i++) {
-        if (dataOG[i]>1) {
-            dataArr.push(1/dataOG[i])
-        } else {
-            dataArr.push(dataOG[i])
-        }
-    }
-    rVal = rgb[0]+(rgb[3]-rgb[0])*(dataArr[idx]);
-    gVal = rgb[1]+(rgb[4]-rgb[1])*(dataArr[idx]);
-    bVal = rgb[2]+(rgb[5]-rgb[2])*(dataArr[idx]);
-
-    return "rgb(" + rVal + "," + gVal + "," + bVal + ")"
-}
-
 function updateAnlPlayStats() {
     for (i=0; i<struct_team.players.length; i++) {
         if (tbl_player.pass_complete[i]>0 || tbl_player.pass_incomplete[i]>0) {
@@ -706,13 +579,35 @@ function updateAnlPlayStats() {
             tbl_anl["Shot %"][i] = 0;
         }
         tbl_anl["Source-Sink"][i] = Math.round(100*tbl_player.sourcesink[i]);
+        tbl_anl["Passes"][i] = tbl_player.pass_complete[i] + tbl_player.pass_incomplete[i]
+        tbl_anl["Shots"][i] = tbl_player.shot_on[i] + tbl_player.shot_off[i]       
     }
+    console.log(tbl_anl)
 }
 //#endregion
 
 //#region Team Actions+Passing
-function addPassCur(pID) {
+function drawCoordinates(){
+    if (tbl_cpass.locx.length>0) {
+        var ctx = document.getElementById("canvas").getContext("2d");
+        ctx.lineWidth = 5;
+        ctx.strokeStyle = "#ff2626"; // Red color
+        ctx.beginPath();
+        ctx.moveTo(tbl_cpass.locx[0]*rect.width,tbl_cpass.locy[0]*rect.height)
+        ctx.arc(tbl_cpass.locx[0]*rect.width,tbl_cpass.locy[0]*rect.height, 10, 0, Math.PI * 2, true);
+        if (tbl_cpass.locx.length>1) {
+            for (i=1; i<tbl_cpass.locx.length; i++) {
+                ctx.lineTo(tbl_cpass.locx[i]*rect.width,tbl_cpass.locy[i]*rect.height)
+                ctx.arc(tbl_cpass.locx[i]*rect.width,tbl_cpass.locy[i]*rect.height, 10, 0, Math.PI * 2, true);
+            }
+        }
+        ctx.stroke();
+    }
+}
+function addPassCur(evt, pID) {
     if (tbl_cpass["index"].length==0 || tbl_cpass["player_no"][tbl_cpass["player_no"].length-1] !== struct_field["players"][pID-1]["pno"]) {
+        var x = evt.clientX - rect.left + $(window).scrollLeft();
+        var y = evt.clientY - rect.top + $(window).scrollTop();
         updateTime();
         var player = struct_field["players"][pID-1]
         var timeMain = parseClock(struct_time["clock_main"]);
@@ -729,7 +624,10 @@ function addPassCur(pID) {
         tbl_cpass["field_id"].push(pID);
         tbl_cpass["player_no"].push(player["pno"]);
         tbl_cpass["last_name"].push(player["nlast"]);
+        tbl_cpass["locx"].push(x/rect.width)
+        tbl_cpass["locy"].push(y/rect.height)
         tbl_cpass["result"].push("pass");
+        drawCoordinates()
     }
 }
 function remPassCur() {
@@ -738,6 +636,9 @@ function remPassCur() {
     }
 }
 function finalizeSeq(lbl) {
+    const context = canvas.getContext('2d');
+    context.clearRect(0, 0, canvas.width, canvas.height);
+
     buttonEnable(clockStop, true);
     // Own Goal Case
     if (lbl=="goal for" && tbl_cpass["index"].length==0) {
@@ -781,6 +682,7 @@ function finalizeSeq(lbl) {
     // Update Player Table
     updatePlayerTable()
     updateAnlPlayStats()
+    updateAnlUITable()
 
     // Clear Current Sequence
     tbl_cpass["index"] = [];
@@ -795,12 +697,14 @@ function finalizeSeq(lbl) {
     tbl_cpass["field_id"] = [];
     tbl_cpass["player_no"] = [];
     tbl_cpass["last_name"] = [];
+    tbl_cpass["locx"] = [];
+    tbl_cpass["locy"] = [];
     tbl_cpass["result"] = [];
 
     updateStats();
 }
 function togglePassActor() {
-    for(var i = 1; i<=5; i++) {
+    for(var i = 1; i<=struct_general.nplay; i++) {
         el = document.getElementById("btn" + i);
         buttonEnable(el, true)
     }
@@ -834,11 +738,18 @@ function updatePlayerTable() {
     }
     console.log(tbl_player)
 }
-btnP1.onclick = function(){addPassCur(1);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP2.onclick = function(){addPassCur(2);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP3.onclick = function(){addPassCur(3);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP4.onclick = function(){addPassCur(4);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP5.onclick = function(){addPassCur(5);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP1.onclick = function(evt){addPassCur(evt,1);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP2.onclick = function(evt){addPassCur(evt,2);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP3.onclick = function(evt){addPassCur(evt,3);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP4.onclick = function(evt){addPassCur(evt,4);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP5.onclick = function(evt){addPassCur(evt,5);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP6.onclick = function(evt){addPassCur(evt,6);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP7.onclick = function(evt){addPassCur(evt,7);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP8.onclick = function(evt){addPassCur(evt,8);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP9.onclick = function(evt){addPassCur(evt,9);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP10.onclick = function(evt){addPassCur(evt,10);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP11.onclick = function(evt){addPassCur(evt,11);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP12.onclick = function(evt){addPassCur(evt,12);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
 btnUndo.onclick = function() {
     remPassCur();
     if (tbl_cpass["index"].length==0) {
@@ -882,109 +793,30 @@ btnGA.onclick = function() {
 //#endregion
 
 //#region Formation
-formMenu.onchange = function() {
-    var formTxt = formMenu.options[formMenu.selectedIndex].text;
-    var formPos = formationSel(formTxt);
-    struct_field["formation"] = formTxt;
-    struct_field["formationid"] = formMenu.selectedIndex;
-    movePlayers(formPos);
-
-    // Update Match Table
-    updateTime();
-    var timeMain = parseClock(struct_time["clock_main"]);
-    var timePlay = parseClock(struct_time["clock_play"]);
-    tbl_match["index"].push(tbl_match["index"].length + 1)
-    tbl_match["period"].push(struct_time["period"]);
-    tbl_match["min_run"].push(timeMain[0]);
-    tbl_match["sec_run"].push(timeMain[1]);
-    tbl_match["min_eff"].push(timePlay[0]);
-    tbl_match["sec_eff"].push(timePlay[1]);
-    tbl_match["result"].push(formTxt);
-    tbl_match["player_id1"].push(-1);
-    tbl_match["field_id1"].push(-1);
-    tbl_match["player_no1"].push(-1);
-    tbl_match["last_name1"].push("");
-    tbl_match["player_id2"].push(-1);
-    tbl_match["field_id2"].push(-1);
-    tbl_match["player_no2"].push(-1);
-    tbl_match["last_name2"].push("");
-}
 dirSwitch.onclick = function() {
     struct_field["direction"] = -1*struct_field["direction"] + 1;
-    movePlayers(formationSel(struct_field["formation"]));
-}
-function formationSel(form) {
-    var positions = [];
-    // Positions: [position#, positionX, positionY];
-    // 0 - GK, 1 - DF, 2 - MD, 3 - FW
-    if (form=="1-2-1") {
-        positions.push([0, 0.15, 0.5]);
-        positions.push([1, 0.35, 0.5]);
-        positions.push([2, 0.55, 0.25]);
-        positions.push([2, 0.55, 0.75]);
-        positions.push([3, 0.75, 0.5]);
-    } else if (form=="1-1-2") {
-        positions.push([0, 0.15, 0.5]);
-        positions.push([1, 0.35, 0.5]);
-        positions.push([2, 0.55, 0.5]);
-        positions.push([3, 0.75, 0.25]);
-        positions.push([3, 0.75, 0.75]);      
-    } else if (form=="1-0-3") {
-        positions.push([0, 0.15, 0.5]);
-        positions.push([1, 0.35, 0.5]);
-        positions.push([3, 0.65, 0.2]);
-        positions.push([3, 0.75, 0.5]);
-        positions.push([3, 0.65, 0.8]);
-    } else if (form=="2-2") {
-        positions.push([0, 0.15, 0.5]);
-        positions.push([1, 0.4, 0.25]);
-        positions.push([1, 0.4, 0.75]);
-        positions.push([3, 0.8, 0.25]);
-        positions.push([3, 0.8, 0.75]);
-    } else if (form=="2-1-1") {
-        positions.push([0, 0.15, 0.5]);
-        positions.push([1, 0.35, 0.25]);
-        positions.push([1, 0.35, 0.75]);
-        positions.push([2, 0.65, 0.5]);
-        positions.push([3, 0.85, 0.5]);
-    } else if (form=="3-0-1") {
-        positions.push([0, 0.15, 0.5]);
-        positions.push([1, 0.4, 0.25]);
-        positions.push([1, 0.3, 0.5]);
-        positions.push([1, 0.4, 0.75]);
-        positions.push([3, 0.85, 0.5]);
-    } else if (form=="4-0") {
-        positions.push([0, 0.15, 0.5]);
-        positions.push([2, 0.6, 0.2]);
-        positions.push([2, 0.4, 0.35]);
-        positions.push([2, 0.4, 0.65]);
-        positions.push([2, 0.6, 0.8]);
-    } else if (form=="5-0") {
-        positions.push([2, 0.35, 0.5]);
-        positions.push([2, 0.65, 0.2]);
-        positions.push([2, 0.5, 0.35]);
-        positions.push([2, 0.5, 0.65]);
-        positions.push([2, 0.65, 0.8]);
+    if(struct_field.direction==0) {
+        btnPositions = [[0.00, 0.00], [0.00, 0.25], [0.00, 0.75],
+                        [0.25, 0.00], [0.25, 0.25], [0.25, 0.75],
+                        [0.50, 0.00], [0.50, 0.25], [0.50, 0.75],
+                        [0.75, 0.00], [0.75, 0.25], [0.75, 0.75]]
+    } else {
+        btnPositions = [[0.75, 0.75], [0.75, 0.25], [0.75, 0.00],
+                        [0.50, 0.75], [0.50, 0.25], [0.50, 0.00],
+                        [0.25, 0.75], [0.25, 0.25], [0.25, 0.00],
+                        [0.00, 0.75], [0.00, 0.25], [0.00, 0.00]]
     }
 
-    return positions
-}
-function movePlayers(positions) {
-    if (struct_field["direction"]==1) {
-        for(var i = 0; i<=4; i++) {
-            positions[i][1] = 1-positions[i][1];
-            positions[i][2] = 1-positions[i][2];
-        }
-    }
     var el;
     const prefix = 'play';
-    for(var i = 1; i<=5; i++) {
+    for(var i = 1; i<=struct_general.nplay; i++) {
         el = document.getElementById(prefix + i);
 
-        el.style.left = (100*positions[i-1][1] - btnWidth/2) + "%"
-        el.style.top = (100*positions[i-1][2] - btnHeight/2) + "%"
+        el.style.left = (100*btnPositions[i-1][0]) + "%"
+        el.style.top = (100*btnPositions[i-1][1]) + "%"
     }
 }
+
 //#endregion
 
 //#region Load Team
@@ -1025,8 +857,6 @@ function loadTeamInfo() {
       }
 
       updateTeamInfo(matchInfo, playerInfo);
-      updateButtonLabels();
-      updateBenchList();
       updateAnlTableHead();
     };
     reader.readAsArrayBuffer(file);
@@ -1078,8 +908,6 @@ btnLoadMatch.onchange = function() {
             tbl_zone = match_data["tbl_zone"];
 
             // UPDATE INFO
-            updateButtonLabels();
-            updateBenchList();
             updateStats();
             clockPer.innerHTML = struct_time["period"];
             clockMain.innerHTML = struct_time["clock_main"];
@@ -1121,8 +949,6 @@ btnLoadMatch.onchange = function() {
             } else {
                 dirSwitch.checked = false;
             }
-            formMenu.selectedIndex = struct_field["formationid"];
-            movePlayers(formationSel(struct_field["formation"]));
 
             togglePassActor();
     });
@@ -1326,25 +1152,16 @@ window.onload = function() {
     buttonEnable(clockStop, false);
     buttonEnable(btnSave, false);
     buttonEnable(btnExport, false);
-    enableSubSwitch(getKeyArray(struct_field["players"], "selected"));
     updateAnlUITable();
+    fitToContainer();
+}
+window.onresize = function() {
+    rect = canvas.getBoundingClientRect();
+    canvas.css("width", $(window).width());
+    canvas.css("height", $(window).height());
 }
 //#endregion
 
-function updateButtonLabels() {
-    var lbl;
-    var btn;
-}
-function updateBenchList() {
-    var benchID = getAllIndexes(getKeyArray(struct_team["players"], "active"), 0);
-    listBench.options.length = 0;
-    for(i=0; i<benchID.length; i++) {
-        var player = struct_team["players"][benchID[i]];
-        var benchName = "[" + player["pno"] + "]" + " " + player["nlast"];
-        listBench.options[listBench.options.length] = new Option(benchName, i);
-    }
-    listBench.selectedIndex = 0;
-}
 function buttonEnable(button, tgl) {
     if (tgl) {
         button.disabled = false;
@@ -1481,3 +1298,9 @@ function updateStats() {
     txtSOFF.innerHTML = sOff;
     txtSEFF.innerHTML = Math.round(100*sE) + "%";
 }
+function fitToContainer() {
+    canvas.style.width='100%';
+    canvas.style.height='100%';
+    canvas.width  = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+  }

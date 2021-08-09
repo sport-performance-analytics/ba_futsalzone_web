@@ -74,6 +74,14 @@ body {
   background-image: linear-gradient(90deg, var(--blue1), var(--blue2));
 }
 
+#canvas {
+  position: absolute;
+  top: 0%;
+  left: 0%;
+  height: 100%;
+  width: 100%;
+}
+
 .head-input {
   display: none;
 }
@@ -361,15 +369,6 @@ input:checked + .slider:before {
 }
 
 #pnl-team {
-  display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: 1fr 1fr 1fr 1fr 1fr;
-  grid-template-areas:
-    "bench"
-    "bench"
-    "bench"
-    "bench"
-    "form";
   grid-area: pnl-team;
 }
 
@@ -713,10 +712,6 @@ input:checked + .slider:before {
 }
 
 /* TEAM PANEL */
-
-#form { grid-area: form; }
-
-#bench { grid-area: bench; }
 
 /* STATS PANEL */
 
