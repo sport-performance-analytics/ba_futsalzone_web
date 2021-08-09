@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <script type="text/javascript" src="http://code.jquery.com/jquery-latest.js"></script>
+  <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
+  <script lang="javascript" src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.0/FileSaver.min.js"></script>
+  <link rel="stylesheet" href="style.css">
+  <title>BreakAway Futsal</title>
+</head>
+<body>
+  <div id="app-container">
+    <div id="grid-container">
+      <div class="panel header" id="header">
+        <img src="breakaway.png" alt="ba logo" id="ba-logo-img">
+        <label class="load-file" id="lbl-head-team">
+          <input type="file" class="head-input" id="head-team">
+          Load Team
+        </label>
+        <label class="load-file" id="lbl-head-match">
+          <input type="file" class="head-input" id="head-match">
+          Load Match
+        </label>
+        <button class="button-1 head" id="head-save">Save Match</button>
+        <button class="button-1 head" id="head-export">Export Data</button>
+      </div>
+      <div class="panel" id="pnl-time">
+        <label class="txt-lbl" for="period" id="lbl-period">PERIOD:</label>
+        <p class="txt-1 period break" id="period">0</p>
+        <button class="button-1 pause" id="pause">PAUSE</button>
+        <button class="button-1 break" id="break">BREAK</button>
+        <button class="button-1 kickoff" id="kick-off">KICK OFF</button>
+        <label class="txt-lbl" for="clock-main" id="lbl-clock-main">TIME:</label>
+        <p class="clock break" id="clock-main">00:00</p>
+      </div>
+      <div class="panel" id="pnl-actions">
+        <button class="button-1 undo" id="undo">UNDO</button>
+        <button class="button-1 shot" id="pk1">PK1</button>
+        <button class="button-1 shot" id="pk2">PK2</button>
+        <button class="button-1 stop" id="stoppage">STOPPAGE</button>
+        <label class="txt-lbl" for="clock-play" id="lbl-clock-play">PLAY TIME:</label>
+        <p class="clock break" id="clock-play">00:00</p>
+        <button class="button-1 pass" id="pass-inc">Pass Inc.</button>
+        <button class="button-1 pass" id="poss-loss">Poss. Loss</button>
+        <button class="button-1 pass" id="seq-brk">Seq. Break</button>
+        <button class="button-1 pass" id="kick-in">Kick In</button>
+        <button class="button-1 shot-on" id="shot-on">Shot ON</button>
+        <button class="button-1 shot-off" id="shot-off">Shot OFF</button>
+        <button class="button-1 shot" id="f-kick">Free Kick</button>
+        <button class="button-1 shot" id="c-kick">Corner Kick</button>
+      </div>
+      <div class="panel" id="pnl-opp">
+        <div class="button-text" id="opp-son">
+          <button class="button-1 btntxt" id="obtn-son">Shot ON</button>
+          <p class="txt-1 btntxt" id="otxt-son">0</p>
+        </div>
+        <div class="button-text" id="opp-soff">
+          <button class="button-1 btntxt" id="obtn-soff">Shot OFF</button>
+          <p class="txt-1 btntxt" id="otxt-soff">0</p>
+        </div>
+        <div class="button-text" id="opp-pk1">
+          <button class="button-1 btntxt" id="obtn-pk1">PK1</button>
+          <p class="txt-1 btntxt" id="otxt-pk1">0</p>
+        </div>
+        <div class="button-text" id="opp-pk2">
+          <button class="button-1 btntxt" id="obtn-pk2">PK2</button>
+          <p class="txt-1 btntxt" id="otxt-pk2">0</p>
+        </div>
+        <div class="button-text" id="opp-ck">
+          <button class="button-1 btntxt" id="obtn-ck">Corner Kick</button>
+          <p class="txt-1 btntxt" id="otxt-ck">0</p>
+        </div>
+        <div class="button-text" id="opp-fk">
+          <button class="button-1 btntxt" id="obtn-fk">Free Kick</button>
+          <p class="txt-1 btntxt" id="otxt-fk">0</p>
+        </div>
+      </div>
+      <div class="panel" id="pnl-match">
+        <p class="txt-1" id="home">HOME TEAM</p>
+        <p class="txt-1" id="away">AWAY TEAM</p>
+        <button class="button-1 normal" id="goal-h">Home<br />Goal</button>
+        <button class="button-1 normal" id="goal-a">Away<br />Goal</button>
+        <p class="txt-1" id="score-h">0</p>
+        <p class="txt-1" id="score-a">0</p>
+      </div>
+      <div class="panel" id="pnl-team">
+        <select class="dropdown" id="form">
+          <option value="1">1-2-1</option>
+          <option value="2">1-1-2</option>
+          <option value="3">1-0-3</option>
+          <option value="4">2-2</option>
+          <option value="5">2-1-1</option>
+          <option value="6">3-0-1</option>
+          <option value="7">4-0</option>
+          <option value="8">5-0</option>
+        </select>
+        <select class="listbox" id="bench" size="5">
+          <option value="1">[6] Six </option>
+          <option value="2">[7] Seven </option>
+          <option value="3">[8] Eight </option>
+          <option value="4">[9] Nine </option>
+          <option value="5">[10] Ten </option>
+          <option value="6">[11] Eleven </option>
+          <option value="7">[12] Twelve</option>
+          <option value="8">[13] Thirteen</option>
+          <option value="9">[14] Fourteen</option>
+          <option value="10">[15] Fifteen</option>
+        </select> 
+      </div>
+      <div class="panel" id="pnl-field">
+        <div id="field-container">
+          <img src="futsal.png" alt="field background" id="field-img">
+          <div class="player" id="play1">
+              <button class="jersey topl" id="btn1">#1</button>
+          </div>
+          <div class="player" id="play2">
+              <button class="jersey" id="btn2">#2</button>
+          </div>
+          <div class="player" id="play3">
+              <button class="jersey botl" id="btn3">#3</button>
+          </div>
+          <div class="player" id="play4">
+              <button class="jersey" id="btn4">#4</button>
+          </div>
+          <div class="player" id="play5">
+              <button class="jersey" id="btn5">#5</button>
+          </div>
+          <div class="player" id="play6">
+            <button class="jersey" id="btn6">#6</button>
+          </div>
+          <div class="player" id="play7">
+              <button class="jersey" id="btn7">#7</button>
+          </div>
+          <div class="player" id="play8">
+              <button class="jersey" id="btn8">#8</button>
+          </div>
+          <div class="player" id="play9">
+              <button class="jersey" id="btn9">#9</button>
+          </div>
+          <div class="player" id="play10">
+              <button class="jersey topr" id="btn10">#10</button>
+          </div>
+          <div class="player" id="play11">
+              <button class="jersey" id="btn11">#11</button>
+          </div>
+          <div class="player" id="play12">
+              <button class="jersey botr" id="btn12">#12</button>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="dirswitch">
+            <span class="slider"></span>
+          </label>
+        </div>
+      </div>
+      <div class="panel" id="pnl-stats">
+        <div class="text-text" id="p-att">
+          <p class="txt-1 txttop">Pass Attempts</p>
+          <p class="txt-1 txtbtm" id="txt-patt">0</p>
+        </div>
+        <div class="text-text" id="p-cmp">
+          <p class="txt-1 txttop">Pass Complete</p>
+          <p class="txt-1 txtbtm" id="txt-pcmp">0</p>
+        </div>
+        <div class="text-text" id="p-eff">
+          <p class="txt-1 txttop">Pass Eff. %</p>
+          <p class="txt-1 txtbtm" id="txt-peff">0%</p>
+        </div>
+        <div class="text-text" id="s-on">
+          <p class="txt-1 txttop">Shot On</p>
+          <p class="txt-1 txtbtm" id="txt-son">0</p>
+        </div>
+        <div class="text-text" id="s-off">
+          <p class="txt-1 txttop">Shot Off</p>
+          <p class="txt-1 txtbtm" id="txt-soff">0</p>
+        </div>
+        <div class="text-text" id="s-eff">
+          <p class="txt-1 txttop">Shot Eff. %</p>
+          <p class="txt-1 txtbtm" id="txt-seff">0%</p>
+        </div>
+      </div>
+      <div class="panel" id="pnl-analysis" style="overflow-y:auto;">
+        <table class="tbl-data" id="tbl-anl">
+          <tr>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</body>
+<script src="main.js"></script>
+</html>
