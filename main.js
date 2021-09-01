@@ -669,7 +669,7 @@ function addPassCur(evt, pID) {
     tbl_cpass["player_no"].push(player["pno"]);
     tbl_cpass["last_name"].push(player["nlast"]);
     tbl_cpass["locx"].push(x/rect.width)
-    tbl_cpass["locy"].push(y/rect.height)
+    tbl_cpass["locy"].push(1-(y/rect.height))
     tbl_cpass["result"].push("pass");
     drawCoordinates()
 
