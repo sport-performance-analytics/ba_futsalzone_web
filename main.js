@@ -669,7 +669,7 @@ function addPassCur(evt, pID) {
     tbl_cpass["player_no"].push(player["pno"]);
     tbl_cpass["last_name"].push(player["nlast"]);
     tbl_cpass["locx"].push(x/rect.width)
-    tbl_cpass["locy"].push(1-(y/rect.height))
+    tbl_cpass["locy"].push(y/rect.height)
     tbl_cpass["result"].push("pass");
     drawCoordinates()
 
@@ -725,7 +725,7 @@ function finalizeSeq(lbl) {
         tbl_pass["player_no"].push(tbl_cpass["player_no"][i]);
         tbl_pass["last_name"].push(tbl_cpass["last_name"][i]);
         tbl_pass["locx"].push(tbl_cpass["locx"][i]);
-        tbl_pass["locy"].push(tbl_cpass["locy"][i]);
+        tbl_pass["locy"].push(1-tbl_cpass["locy"][i]);
         tbl_pass["result"].push(tbl_cpass["result"][i]);
     }
 
