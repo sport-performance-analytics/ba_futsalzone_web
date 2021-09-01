@@ -787,7 +787,7 @@ function addAction(lbl) {
     tbl_actions["result"].push(lbl);
 
     if (lbl=="duel won") {
-        tbl_anl["Duels Won"][pID]++;
+        tbl_anl["Duels Won"][pID-1]++;
     }
 }
 
