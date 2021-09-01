@@ -604,9 +604,9 @@ function updateAnlUITable() {
     tblAnl.innerHTML = table;
 }
 function getCellColor(dataArr, idx, rgb) {
-    rVal = rgb[0]+(rgb[3]-rgb[0])*(dataArr[idx] / (Math.max(...dataArr)+0.01));
-    gVal = rgb[1]+(rgb[4]-rgb[1])*(dataArr[idx] / (Math.max(...dataArr)+0.01));
-    bVal = rgb[2]+(rgb[5]-rgb[2])*(dataArr[idx] / (Math.max(...dataArr)+0.01));
+    rVal = rgb[0]+(rgb[3]-rgb[0])*(dataArr[idx] / (Math.max(...dataArr)+0.001));
+    gVal = rgb[1]+(rgb[4]-rgb[1])*(dataArr[idx] / (Math.max(...dataArr)+0.001));
+    bVal = rgb[2]+(rgb[5]-rgb[2])*(dataArr[idx] / (Math.max(...dataArr)+0.001));
 
     return "rgb(" + rVal + "," + gVal + "," + bVal + ")"
 }
@@ -627,6 +627,18 @@ function updateAnlPlayStats() {
         tbl_anl["Source-Sink"][i] = Math.round(100*tbl_player.sourcesink[i]);
         tbl_anl["Passes"][i] = tbl_player.pass_complete[i] + tbl_player.pass_incomplete[i]
         tbl_anl["Shots"][i] = tbl_player.shot_on[i] + tbl_player.shot_off[i]       
+    }
+}
+function updateHeatMap() {
+    prefix = "btn";
+    rCol = [39,103,176,50,230,125]
+    console.log(tbl_player)
+    for(var i=1; i<=struct_general.nplay; i++) {
+        cCol = getCellColor(tbl_player.pass_complete, i-1, rCol); //"rgb(" + 39 + "," + 103 + "," + 176 + ")";//
+        el = document.getElementById(prefix + i);
+        el.style.background = cCol;
+        // dataArr = tbl_player.pass_complete;
+        // el.style.opacity = 0.5*(dataArr[i-1]/(Math.max(...dataArr)+0.001)) + 0.5;
     }
 }
 //#endregion
@@ -733,6 +745,7 @@ function finalizeSeq(lbl) {
     updatePlayerTable()
     updateAnlPlayStats()
     updateAnlUITable()
+    updateHeatMap();
 
     // Clear Current Sequence
     tbl_cpass["index"] = [];
