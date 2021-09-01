@@ -788,6 +788,7 @@ function addAction(lbl) {
 
     if (lbl=="duel won") {
         tbl_anl["Duels Won"][pID-1]++;
+        updateAnlUITable();
     }
 }
 
