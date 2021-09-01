@@ -1,5 +1,5 @@
 //#region var/const declarations;
-var lastNames = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen"]
+var lastNames = ["One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen"]
 // Header
 var btnLoadTeam = document.getElementById("head-team");
 var btnLoadMatch = document.getElementById("head-match");
@@ -36,27 +36,34 @@ var btnP9 = document.getElementById("btn9");
 var btnP10 = document.getElementById("btn10");
 var btnP11 = document.getElementById("btn11");
 var btnP12 = document.getElementById("btn12");
+var btnP13 = document.getElementById("btn13");
+var btnP14 = document.getElementById("btn14");
+var btnP15 = document.getElementById("btn15");
+var btnP16 = document.getElementById("btn16");
+
 var dirSwitch = document.getElementById("dirswitch");
-const btnHeight = 15;
-const btnWidth = 10;
-var btnPositions = [[0.00, 0.00], [0.00, 0.25], [0.00, 0.75],
-                    [0.25, 0.00], [0.25, 0.25], [0.25, 0.75],
-                    [0.50, 0.00], [0.50, 0.25], [0.50, 0.75],
-                    [0.75, 0.00], [0.75, 0.25], [0.75, 0.75]]
+var btnPositions = [[0.00, 0.00], [0.00, 0.25], [0.00, 0.50], [0.00, 0.75],
+                    [0.30, 0.00], [0.30, 0.25], [0.30, 0.50], [0.30, 0.75],
+                    [0.50, 0.00], [0.50, 0.25], [0.50, 0.50], [0.50, 0.75],
+                    [0.70, 0.00], [0.70, 0.25], [0.70, 0.50], [0.70, 0.75]]
 // Actions
 var btnUndo = document.getElementById("undo");
 var btnPINC = document.getElementById("pass-inc");
-var btnPLOSS = document.getElementById("poss-loss");
+var btnDWON = document.getElementById("duel-won");
+var btnPLOSS = document.getElementById("duel-loss");
+var btnPGAIN = document.getElementById("recovery");
+var btnBLK = document.getElementById("block");
 var btnSEQ = document.getElementById("seq-brk");
-var btnKIN = document.getElementById("kick-in");
 var btnSON = document.getElementById("shot-on");
 var btnSOFF = document.getElementById("shot-off");
+var btnSBLK = document.getElementById("shot-block");
 var btnFK = document.getElementById("f-kick");
 var btnCK = document.getElementById("c-kick");
 var btnPK1 = document.getElementById("pk1");
 var btnPK2 = document.getElementById("pk2");
 var btnGH = document.getElementById("goal-h");
 var btnGA = document.getElementById("goal-a");
+var txtSeq = document.getElementById("txt-seq");
 // Opp
 var btnOSON = document.getElementById("obtn-son");
 var btnOSOFF = document.getElementById("obtn-soff");
@@ -89,7 +96,7 @@ const arrSum = arr => arr.reduce((a,b) => a + b, 0);
 //#region  INITIALIZATION
 //#region  Initialize Dictionaries
 var struct_general = {  // Generic Container
-    "nplay": 12,
+    "nplay": 16,
     "nsub": 0
 };
 var struct_time = { // Time Container
@@ -183,6 +190,23 @@ var tbl_pass = {
     "field_id": [],
     "player_no": [],
     "last_name": [],
+    "locx": [],
+    "locy": [],
+    "result": []
+}
+var tbl_actions = {
+    "index": [],
+    "sequence": [],
+    "pass_num": [],
+    "period": [],
+    "min_run": [],
+    "sec_run": [],
+    "min_eff": [],
+    "sec_eff": [],
+    "player_id": [],
+    "field_id": [],
+    "player_no": [],
+    "last_name": [],
     "result": []
 }
 var tbl_opp = {
@@ -211,26 +235,9 @@ var tbl_match = {
     "player_no2": [-1],
     "last_name2": [""],
 }
-var tbl_zone = {
-    "index": [],
-    "sequence": [],
-    "pass_num": [],
-    "period": [],
-    "min_run": [],
-    "sec_run": [],
-    "min_eff": [],
-    "sec_eff": [],
-    "start_x": [],
-    "start_y": [],
-    "start_zone": [],
-    "end_x": [],
-    "end_y": [],
-    "end_zone": [],
-    "result": []
-}
 for (var i = 0; i<struct_general["nplay"]; i++) {
-    var timeMain = parseClock(struct_time["clock_main"]);
-    var timePlay = parseClock(struct_time["clock_play"]);
+    var timeMain = parseClock(struct_time["clock_main"],0);
+    var timePlay = parseClock(struct_time["clock_play"],1);
     tbl_match["index"].push(i+2);
     tbl_match["period"].push(struct_time["period"]);
     tbl_match["min_run"].push(timeMain[0]);
@@ -252,6 +259,7 @@ var tbl_anl = {
     "Pass %": [],
     "Shots": [],
     "Shot %": [],
+    "Duels Won": [],
     "Source-Sink": [],
 }
 for (var i = 0; i<struct_general["nplay"]+struct_general["nsub"]; i++) {
@@ -259,6 +267,7 @@ for (var i = 0; i<struct_general["nplay"]+struct_general["nsub"]; i++) {
     tbl_anl["Pass %"].push(0);
     tbl_anl["Shots"].push(0);
     tbl_anl["Shot %"].push(0);
+    tbl_anl["Duels Won"].push(0);
     tbl_anl["Source-Sink"].push(0);
 }
 //#endregion
@@ -276,8 +285,8 @@ clockKickOff.onclick = function() {
 
     // Update Match Table
     updateTime();
-    var timeMain = parseClock(struct_time["clock_main"]);
-    var timePlay = parseClock(struct_time["clock_play"]);
+    var timeMain = parseClock(struct_time["clock_main"],0);
+    var timePlay = parseClock(struct_time["clock_play"],1);
     tbl_match["index"].push(tbl_match["index"].length + 1)
     tbl_match["period"].push(struct_time["period"]);
     tbl_match["min_run"].push(timeMain[0]);
@@ -320,10 +329,15 @@ clockBreak.onclick = function() {
     clearInterval(IntervalM);
     clearInterval(IntervalP);
     
+    // Update Pass Table
+    if (tbl_cpass.index.length>0) {
+        finalizeSeq("sequence break")
+    }
+
     // Update Match Table
     updateTime();
-    var timeMain = parseClock(struct_time["clock_main"]);
-    var timePlay = parseClock(struct_time["clock_play"]);
+    var timeMain = parseClock(struct_time["clock_main"],0);
+    var timePlay = parseClock(struct_time["clock_play"],1);
     tbl_match["index"].push(tbl_match["index"].length + 1)
     tbl_match["period"].push(struct_time["period"]);
     tbl_match["min_run"].push(timeMain[0]);
@@ -341,12 +355,12 @@ clockBreak.onclick = function() {
     tbl_match["last_name2"].push("");
 
     minutesM = "0";
-    secondsM = "00";
-    displayClock(clockMain, minutesM, secondsM)
+    secondsM = "0";
+    displayClock(clockMain, minutesM, secondsM, 0)
 
     minutesP = "0";
-    secondsP = "00";
-    displayClock(clockPlay, minutesP, secondsP)
+    secondsP = "0";
+    displayClock(clockPlay, minutesP, secondsP, 1)
 
     // Toggles
     struct_time["kickofftgl"] = 0;
@@ -426,44 +440,76 @@ clockStop.onclick = function() {
     }
 }
 function startMain() {
-    secondsM++; 
-
-    if(secondsM <= 9){
-    secondsM = "0" + secondsM;
-    }
+    secondsM++;
     
     if (secondsM > 59) {
     minutesM++;
     secondsM = 0;
     }
 
-    displayClock(clockMain, minutesM, secondsM)
+    displayClock(clockMain, minutesM, secondsM, 0)
 }
 function startPlay() {
-    secondsP++; 
-
-    if(secondsP <= 9){
-    secondsP = "0" + secondsP;
-    }
+    secondsP++;
     
     if (secondsP > 59) {
     minutesP++;
     secondsP = 0;
     }
 
-    displayClock(clockPlay, minutesP, secondsP)
+    displayClock(clockPlay, minutesP, secondsP, 1)
 }
-function displayClock(clockTxt, minutes, seconds) {
-    if(minutesP <= 9){
-        clockTxt.innerHTML = "0" + minutes + ":" + seconds;
+function displayClock(clockTxt, minutes, seconds, mode) {
+    // mode: 0 - Main Clock, 1 - Play Clock
+    if (mode==0) {
+        var minutesTxt = parseInt(minutes)
+        var secondsTxt = parseInt(seconds)
+        if(minutes<=9){
+            minutesTxt = "0" + parseInt(minutes)
+        }
+        if(seconds<=9){
+            secondsTxt = "0" + parseInt(seconds)
+        }
+        clockTxt.innerHTML = minutesTxt + ":" + secondsTxt;
     } else {
-        clockTxt.innerHTML = minutes + ":" + seconds;
+        var secondsTotal = 1200 - (parseInt(seconds) + 60*parseInt(minutes))
+        if (secondsTotal>=0) {
+            clockTxt.innerHTML = setClock(secondsTotal)
+        } else {
+            var minutesTxt = Math.ceil(secondsTotal/60);
+            var secondsTxt = Math.abs(secondsTotal - 60*minutesTxt);
+            if (minutesTxt>-10) {
+                minutesTxt = "-0" + Math.abs(minutesTxt);
+            }
+            if (secondsTxt<10) {
+                secondsTxt = "0" + secondsTxt;
+            }
+            clockTxt.innerHTML = minutesTxt + ":" + secondsTxt
+        }
     }
 }
-function parseClock(clockTxt) {
-    clockArr = clockTxt.split(":");
-    minutes = clockArr[0];
-    seconds = clockArr[1];
+function parseClock(clockTxt, mode) {
+    // 0: Main Clock, 1: Play Clock
+    if (mode==0) {
+        clockArr = clockTxt.split(":");
+        minutes = clockArr[0];
+        seconds = clockArr[1];
+    } else {
+        clockArr = clockTxt.split(":");
+        secondsTotal = 1200 - (60*parseInt(clockArr[0]) + parseInt(clockArr[1]));
+        minutes = Math.floor(secondsTotal/60);
+        seconds = secondsTotal - 60*minutes;
+        if (minutes<=9) {
+            minutes = "0"+minutes;
+        } else {
+            minutes = minutes.toString();
+        }
+        if (seconds<=9) {
+            seconds = "0"+seconds;
+        } else {
+            seconds = seconds.toString();
+        }
+    }
 
     return [minutes, seconds]
 }
@@ -490,8 +536,8 @@ function registerOppAction(txt, action) {
     txt.innerHTML++;
     // Update Opp Table
     updateTime();
-    var timeMain = parseClock(struct_time["clock_main"]);
-    var timePlay = parseClock(struct_time["clock_play"]);
+    var timeMain = parseClock(struct_time["clock_main"],0);
+    var timePlay = parseClock(struct_time["clock_play"],1);
     tbl_opp["index"].push(tbl_opp["index"].length + 1)
     tbl_opp["period"].push(struct_time["period"]);
     tbl_opp["min_run"].push(timeMain[0]);
@@ -582,14 +628,13 @@ function updateAnlPlayStats() {
         tbl_anl["Passes"][i] = tbl_player.pass_complete[i] + tbl_player.pass_incomplete[i]
         tbl_anl["Shots"][i] = tbl_player.shot_on[i] + tbl_player.shot_off[i]       
     }
-    console.log(tbl_anl)
 }
 //#endregion
 
 //#region Team Actions+Passing
 function drawCoordinates(){
     if (tbl_cpass.locx.length>0) {
-        var ctx = document.getElementById("canvas").getContext("2d");
+        var ctx = canvas.getContext("2d");
         ctx.lineWidth = 5;
         ctx.strokeStyle = "#ff2626"; // Red color
         ctx.beginPath();
@@ -605,30 +650,31 @@ function drawCoordinates(){
     }
 }
 function addPassCur(evt, pID) {
-    if (tbl_cpass["index"].length==0 || tbl_cpass["player_no"][tbl_cpass["player_no"].length-1] !== struct_field["players"][pID-1]["pno"]) {
-        var x = evt.clientX - rect.left + $(window).scrollLeft();
-        var y = evt.clientY - rect.top + $(window).scrollTop();
-        updateTime();
-        var player = struct_field["players"][pID-1]
-        var timeMain = parseClock(struct_time["clock_main"]);
-        var timePlay = parseClock(struct_time["clock_play"]);
-        tbl_cpass["index"].push(tbl_pass["index"].length + tbl_cpass["index"].length + 1);
-        tbl_cpass["sequence"].push(getSequenceNo());
-        tbl_cpass["pass_num"].push(tbl_cpass["index"].length);
-        tbl_cpass["period"].push(struct_time["period"]);
-        tbl_cpass["min_run"].push(timeMain[0]);
-        tbl_cpass["sec_run"].push(timeMain[1]);
-        tbl_cpass["min_eff"].push(timePlay[0]);
-        tbl_cpass["sec_eff"].push(timePlay[1]);
-        tbl_cpass["player_id"].push(player["pid"]);
-        tbl_cpass["field_id"].push(pID);
-        tbl_cpass["player_no"].push(player["pno"]);
-        tbl_cpass["last_name"].push(player["nlast"]);
-        tbl_cpass["locx"].push(x/rect.width)
-        tbl_cpass["locy"].push(y/rect.height)
-        tbl_cpass["result"].push("pass");
-        drawCoordinates()
-    }
+    var x = evt.clientX - rect.left + $(window).scrollLeft();
+    var y = evt.clientY - rect.top + $(window).scrollTop();
+    updateTime();
+    var player = struct_field["players"][pID-1]
+    var timeMain = parseClock(struct_time["clock_main"],0);
+    var timePlay = parseClock(struct_time["clock_play"],1);
+    tbl_cpass["index"].push(tbl_pass["index"].length + tbl_cpass["index"].length + 1);
+    tbl_cpass["sequence"].push(getSequenceNo());
+    tbl_cpass["pass_num"].push(tbl_cpass["index"].length);
+    tbl_cpass["period"].push(struct_time["period"]);
+    tbl_cpass["min_run"].push(timeMain[0]);
+    tbl_cpass["sec_run"].push(timeMain[1]);
+    tbl_cpass["min_eff"].push(timePlay[0]);
+    tbl_cpass["sec_eff"].push(timePlay[1]);
+    tbl_cpass["player_id"].push(player["pid"]);
+    tbl_cpass["field_id"].push(pID);
+    tbl_cpass["player_no"].push(player["pno"]);
+    tbl_cpass["last_name"].push(player["nlast"]);
+    tbl_cpass["locx"].push(x/rect.width)
+    tbl_cpass["locy"].push(y/rect.height)
+    tbl_cpass["result"].push("pass");
+    drawCoordinates()
+
+    console.log(tbl_cpass)
+    txtSeq.innerHTML += "_ " + pID + " "
 }
 function remPassCur() {
     for (entry in tbl_cpass) {
@@ -638,13 +684,13 @@ function remPassCur() {
 function finalizeSeq(lbl) {
     const context = canvas.getContext('2d');
     context.clearRect(0, 0, canvas.width, canvas.height);
-
+    txtSeq.innerHTML = " "
     buttonEnable(clockStop, true);
     // Own Goal Case
     if (lbl=="goal for" && tbl_cpass["index"].length==0) {
         updateTime();
-        var timeMain = parseClock(struct_time["clock_main"]);
-        var timePlay = parseClock(struct_time["clock_play"]);
+        var timeMain = parseClock(struct_time["clock_main"],0);
+        var timePlay = parseClock(struct_time["clock_play"],1);
         tbl_cpass["index"].push(tbl_pass["index"].length + tbl_cpass["index"].length + 1);
         tbl_cpass["sequence"].push(getSequenceNo());
         tbl_cpass["pass_num"].push(1);
@@ -657,6 +703,8 @@ function finalizeSeq(lbl) {
         tbl_cpass["field_id"].push("");
         tbl_cpass["player_no"].push("");
         tbl_cpass["last_name"].push("");
+        tbl_cpass["locx"].push("")
+        tbl_cpass["locy"].push("")
         tbl_cpass["result"].push("own goal for");
     } else {
         tbl_cpass["result"][tbl_cpass["result"].length - 1] = lbl;
@@ -676,6 +724,8 @@ function finalizeSeq(lbl) {
         tbl_pass["field_id"].push(tbl_cpass["field_id"][i]);
         tbl_pass["player_no"].push(tbl_cpass["player_no"][i]);
         tbl_pass["last_name"].push(tbl_cpass["last_name"][i]);
+        tbl_pass["locx"].push(tbl_cpass["locx"][i]);
+        tbl_pass["locy"].push(tbl_cpass["locy"][i]);
         tbl_pass["result"].push(tbl_cpass["result"][i]);
     }
 
@@ -714,6 +764,33 @@ function togglePassActor() {
         buttonEnable(el, false)
     }
 }
+
+function addAction(lbl) {
+    pID = tbl_cpass["player_no"][tbl_cpass["player_no"].length-1]
+    updateTime();
+    var player = struct_field["players"][pID-1]
+    var timeMain = parseClock(struct_time["clock_main"],0);
+    var timePlay = parseClock(struct_time["clock_play"],1);
+    tbl_actions["index"].push(tbl_pass["index"].length + tbl_cpass["index"].length + 1);
+    tbl_actions["sequence"].push(getSequenceNo());
+    tbl_actions["pass_num"].push(tbl_cpass["index"].length);
+    tbl_actions["period"].push(struct_time["period"]);
+    tbl_actions["min_run"].push(timeMain[0]);
+    tbl_actions["sec_run"].push(timeMain[1]);
+    tbl_actions["min_eff"].push(timePlay[0]);
+    tbl_actions["sec_eff"].push(timePlay[1]);
+    tbl_actions["player_id"].push(player["pid"]);
+    tbl_actions["field_id"].push(pID);
+    tbl_actions["player_no"].push(player["pno"]);
+    tbl_actions["last_name"].push(player["nlast"]);
+    tbl_actions["last_name"].push(player["nlast"]);
+    tbl_actions["result"].push(lbl);
+
+    if (lbl=="duel won") {
+        tbl_anl["Duels Won"][pID]++;
+    }
+}
+
 function updatePlayerTable() {
     for (i=0; i<tbl_cpass.pass_num.length; i++) {
         var pid = tbl_cpass.player_id[i]-1;
@@ -736,20 +813,24 @@ function updatePlayerTable() {
             }
         }
     }
-    console.log(tbl_player)
 }
-btnP1.onclick = function(evt){addPassCur(evt,1);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP2.onclick = function(evt){addPassCur(evt,2);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP3.onclick = function(evt){addPassCur(evt,3);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP4.onclick = function(evt){addPassCur(evt,4);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP5.onclick = function(evt){addPassCur(evt,5);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP6.onclick = function(evt){addPassCur(evt,6);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP7.onclick = function(evt){addPassCur(evt,7);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP8.onclick = function(evt){addPassCur(evt,8);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP9.onclick = function(evt){addPassCur(evt,9);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP10.onclick = function(evt){addPassCur(evt,10);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP11.onclick = function(evt){addPassCur(evt,11);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
-btnP12.onclick = function(evt){addPassCur(evt,12);toggleActions(true);buttonEnable(clockStop, false);togglePassActor()}
+btnP1.onclick = function(evt){addPassCur(evt,1);toggleActions(true);buttonEnable(clockStop, false);}
+btnP2.onclick = function(evt){addPassCur(evt,2);toggleActions(true);buttonEnable(clockStop, false);}
+btnP3.onclick = function(evt){addPassCur(evt,3);toggleActions(true);buttonEnable(clockStop, false);}
+btnP4.onclick = function(evt){addPassCur(evt,4);toggleActions(true);buttonEnable(clockStop, false);}
+btnP5.onclick = function(evt){addPassCur(evt,5);toggleActions(true);buttonEnable(clockStop, false);}
+btnP6.onclick = function(evt){addPassCur(evt,6);toggleActions(true);buttonEnable(clockStop, false);}
+btnP7.onclick = function(evt){addPassCur(evt,7);toggleActions(true);buttonEnable(clockStop, false);}
+btnP8.onclick = function(evt){addPassCur(evt,8);toggleActions(true);buttonEnable(clockStop, false);}
+btnP9.onclick = function(evt){addPassCur(evt,9);toggleActions(true);buttonEnable(clockStop, false);}
+btnP10.onclick = function(evt){addPassCur(evt,10);toggleActions(true);buttonEnable(clockStop, false);}
+btnP11.onclick = function(evt){addPassCur(evt,11);toggleActions(true);buttonEnable(clockStop, false);}
+btnP12.onclick = function(evt){addPassCur(evt,12);toggleActions(true);buttonEnable(clockStop, false);}
+btnP13.onclick = function(evt){addPassCur(evt,13);toggleActions(true);buttonEnable(clockStop, false);}
+btnP14.onclick = function(evt){addPassCur(evt,14);toggleActions(true);buttonEnable(clockStop, false);}
+btnP15.onclick = function(evt){addPassCur(evt,15);toggleActions(true);buttonEnable(clockStop, false);}
+btnP16.onclick = function(evt){addPassCur(evt,16);toggleActions(true);buttonEnable(clockStop, false);}
+
 btnUndo.onclick = function() {
     remPassCur();
     if (tbl_cpass["index"].length==0) {
@@ -758,11 +839,14 @@ btnUndo.onclick = function() {
     togglePassActor()
 }
 btnPINC.onclick = function() {finalizeSeq("pass incomplete");toggleActions(false);togglePassActor()}
+btnDWON.onclick = function() {addAction("duel won")}
 btnPLOSS.onclick = function() {finalizeSeq("possession loss");toggleActions(false);togglePassActor()}
+btnBLK.onclick = function() {addAction("block")}
+btnPGAIN.onclick = function() {addAction("possession gain")}
 btnSEQ.onclick = function() {finalizeSeq("sequence break");toggleActions(false);togglePassActor()}
-btnKIN.onclick = function() {finalizeSeq("kick in");toggleActions(false);togglePassActor()}
 btnSON.onclick = function() {finalizeSeq("shot on");toggleActions(false);togglePassActor()}
 btnSOFF.onclick = function() {finalizeSeq("shot off");toggleActions(false);togglePassActor()}
+btnSBLK.onclick = function() {finalizeSeq("shot block");toggleActions(false);togglePassActor()}
 btnCK.onclick = function() {finalizeSeq("corner kick");toggleActions(false);togglePassActor()}
 btnFK.onclick = function() {finalizeSeq("free kick");toggleActions(false);togglePassActor()}
 btnPK1.onclick = function() {finalizeSeq("penalty 1");toggleActions(false);togglePassActor()}
@@ -796,15 +880,31 @@ btnGA.onclick = function() {
 dirSwitch.onclick = function() {
     struct_field["direction"] = -1*struct_field["direction"] + 1;
     if(struct_field.direction==0) {
-        btnPositions = [[0.00, 0.00], [0.00, 0.25], [0.00, 0.75],
-                        [0.25, 0.00], [0.25, 0.25], [0.25, 0.75],
-                        [0.50, 0.00], [0.50, 0.25], [0.50, 0.75],
-                        [0.75, 0.00], [0.75, 0.25], [0.75, 0.75]]
+        btnPositions = [[0.00, 0.00], [0.00, 0.25], [0.00, 0.50], [0.00, 0.75],
+                        [0.30, 0.00], [0.30, 0.25], [0.30, 0.50], [0.30, 0.75],
+                        [0.50, 0.00], [0.50, 0.25], [0.50, 0.50], [0.50, 0.75],
+                        [0.70, 0.00], [0.70, 0.25], [0.70, 0.50], [0.70, 0.75]]
+        btnP1.classList.remove('botr')
+        btnP4.classList.remove('topr')
+        btnP13.classList.remove('botl')
+        btnP16.classList.remove('topl')
+        btnP1.classList.add('topl')
+        btnP4.classList.add('botl')
+        btnP13.classList.add('topr')
+        btnP16.classList.add('botr')
     } else {
-        btnPositions = [[0.75, 0.75], [0.75, 0.25], [0.75, 0.00],
-                        [0.50, 0.75], [0.50, 0.25], [0.50, 0.00],
-                        [0.25, 0.75], [0.25, 0.25], [0.25, 0.00],
-                        [0.00, 0.75], [0.00, 0.25], [0.00, 0.00]]
+        btnPositions = [[0.70, 0.75], [0.70, 0.50], [0.70, 0.25], [0.70, 0.00],
+                        [0.50, 0.75], [0.50, 0.50], [0.50, 0.25], [0.50, 0.00],
+                        [0.30, 0.75], [0.30, 0.50], [0.30, 0.25], [0.30, 0.00],
+                        [0.00, 0.75], [0.00, 0.50], [0.00, 0.25], [0.00, 0.00]]
+        btnP1.classList.remove('topl')
+        btnP4.classList.remove('botl')
+        btnP13.classList.remove('topr')
+        btnP16.classList.remove('botr')
+        btnP1.classList.add('botr')
+        btnP4.classList.add('topr')
+        btnP13.classList.add('botl')
+        btnP16.classList.add('topl')
     }
 
     var el;
@@ -903,12 +1003,22 @@ btnLoadMatch.onchange = function() {
             struct_field = match_data["field"];
             tbl_cpass = match_data["tbl_cpass"];
             tbl_pass = match_data["tbl_pass"];
+            tbl_actions = match_data["tbl_actions"];
             tbl_opp = match_data["tbl_opp"];
             tbl_match = match_data["tbl_match"];
-            tbl_zone = match_data["tbl_zone"];
+            tbl_anl = match_data["tbl_anl"];
+
+            // UPDATE MINUTES + SECONDS        
+            var timeMain = parseClock(struct_time["clock_main"],0);
+            var timePlay = parseClock(struct_time["clock_play"],1);
+            minutesM = timeMain[0];
+            secondsM = timeMain[1];
+            minutesP = timePlay[0];
+            secondsP = timePlay[1];
 
             // UPDATE INFO
             updateStats();
+            updateAnlUITable();
             clockPer.innerHTML = struct_time["period"];
             clockMain.innerHTML = struct_time["clock_main"];
             clockPlay.innerHTML = struct_time["clock_play"];
@@ -949,8 +1059,6 @@ btnLoadMatch.onchange = function() {
             } else {
                 dirSwitch.checked = false;
             }
-
-            togglePassActor();
     });
     reader.readAsText(file);
 };
@@ -967,9 +1075,10 @@ btnSave.onclick = function() {
         "field": struct_field,
         "tbl_cpass": tbl_cpass,
         "tbl_pass": tbl_pass,
+        "tbl_actions": tbl_actions,
         "tbl_opp": tbl_opp,
         "tbl_match": tbl_match,
-        "tbl_zone": tbl_zone
+        "tbl_anl": tbl_anl
     }
     var blob = new Blob([JSON.stringify(struct)], {type: "text/plain;charset=utf-8"});
     var fileName = struct_match["teams"][0] + "_" + struct_match["teams"][1] + "_" + struct_match["date"] + ".txt";
@@ -1088,6 +1197,41 @@ btnExport.onclick = function() {
         }
     }
 
+    // Team Actions Tab
+    var dataTeamActions = [];
+    // Header
+    dataTeamActions.push(Object.keys(tbl_pass));
+    // Data
+    if (tbl_actions["index"].length > 0) {
+        for (var row=0; row<tbl_actions["index"].length; row++) {
+            var datarow = [];
+            for (var col=0; col<Object.keys(tbl_actions).length; col++) {
+                datarow.push(tbl_actions[Object.keys(tbl_actions)[col]][row])
+            }
+            dataTeamActions.push(datarow.slice());
+        }
+    }
+
+    // Playing Stats Tab
+    var dataPlayEvents = [];
+    // Header
+    var headerrow = []
+    headerrow.push('Jersey #')
+    headerrow.push('Display Name')
+    dataPlayEvents.push(headerrow.concat(Object.keys(tbl_anl)));
+    // Data
+    if (tbl_anl.Passes.length > 0) {
+        for (var row=0; row<tbl_anl.Passes.length; row++) {
+            var datarow = [];
+            datarow.push(struct_team.players[row].pno)
+            datarow.push(struct_team.players[row].nlast)
+            for (var col=0; col<Object.keys(tbl_anl).length; col++) {
+                datarow.push(tbl_anl[Object.keys(tbl_anl)[col]][row])
+            }
+            dataPlayEvents.push(datarow.slice());
+        }
+    }
+
     // Pass Matrix Tab
     var dataPassMatrix = [[],[],[],[],[]];
     var passMat = getPassMatrix();
@@ -1131,6 +1275,8 @@ btnExport.onclick = function() {
     wb = pushSheet(wb, "Match Events", dataMatchEvents);
     wb = pushSheet(wb, "Opposition Events", dataOppEvents);
     wb = pushSheet(wb, "Team Events", dataTeamEvents);
+    wb = pushSheet(wb, "Team Actions", dataTeamActions);
+    wb = pushSheet(wb, "Playing Stats", dataPlayEvents);
     wb = pushSheet(wb, "Pass Matrix", dataPassMatrix);
 
     // Export
@@ -1154,6 +1300,8 @@ window.onload = function() {
     buttonEnable(btnExport, false);
     updateAnlUITable();
     fitToContainer();
+    canvas = document.getElementById("canvas");
+    rect = canvas.getBoundingClientRect();
 }
 window.onresize = function() {
     rect = canvas.getBoundingClientRect();
@@ -1173,11 +1321,14 @@ function buttonEnable(button, tgl) {
 }
 function toggleActions(tgl) {
     buttonEnable(btnPINC, tgl);
+    buttonEnable(btnDWON, tgl);
     buttonEnable(btnPLOSS, tgl);
+    buttonEnable(btnBLK, tgl);
+    buttonEnable(btnPGAIN, tgl);
     buttonEnable(btnSEQ, tgl);
-    buttonEnable(btnKIN, tgl);
     buttonEnable(btnSON, tgl);
     buttonEnable(btnSOFF, tgl);
+    buttonEnable(btnSBLK, tgl);
     buttonEnable(btnFK, tgl);
     buttonEnable(btnCK, tgl);
     buttonEnable(btnPK1, tgl);
@@ -1197,6 +1348,10 @@ function togglePlayers(tgl) {
     buttonEnable(btnP10, tgl)
     buttonEnable(btnP11, tgl)
     buttonEnable(btnP12, tgl)
+    buttonEnable(btnP13, tgl)
+    buttonEnable(btnP14, tgl)
+    buttonEnable(btnP15, tgl)
+    buttonEnable(btnP16, tgl)
 }
 function toggleOpp(tgl) {
     buttonEnable(btnOSON, tgl);
