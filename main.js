@@ -1128,7 +1128,7 @@ function getPassMatrix() {
     }
     var passMat = Array(nPlayers).fill().map(_ => Array(nPlayers).fill(0));
     var passIndex = getAllIndexes(tbl_pass["result"], "pass");
-    for (var row=0; row<=passIndex.length; row++) {
+    for (var row=0; row<passIndex.length; row++) {
         pID1 = tbl_pass["player_id1"][passIndex[row]];
         pID2 = tbl_pass["player_id2"][passIndex[row]];
         passMat[pID1-1][pID2-1]++;
